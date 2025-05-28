@@ -221,3 +221,19 @@ textarea.drag-over {
     font-size: 0.9em;
     /* Colors are set by JavaScript (green for success, red for error, orange for warning) */
 }
+
+.button-like-label {
+    background-color: #007bff; /* Or your standard button color */
+    color: white;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em; /* Match button font size */
+    display: inline-block; /* Allow padding and act like a button */
+    /* Add any other styles from your .card-controls button if needed for consistency */
+    /* e.g., border: none; margin: 0 5px; (if buttons have margins) */
+}
+
+.button-like-label:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+}
