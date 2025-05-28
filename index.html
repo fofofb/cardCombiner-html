@@ -25,6 +25,18 @@
 
         <div class="copy-action">
             <button id="copy-text-btn">复制组合文本</button>
+            <div id="copy-status-message" aria-live="polite" style="margin-top: 10px; min-height: 20px;"></div>
+        </div>
+    </div>
+
+    <!-- Modal for Card Input -->
+    <div id="card-input-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal-btn">&times;</span>
+            <h3 id="modal-title">增加卡片</h3>
+            <textarea id="modal-textarea" placeholder="输入卡片文本..."></textarea>
+            <button id="modal-save-btn">保存</button>
+            <button id="modal-cancel-btn">取消</button>
         </div>
     </div>
 

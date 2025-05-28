@@ -4,8 +4,62 @@ document.addEventListener('DOMContentLoaded', () => {
     const textArea1 = document.getElementById('text-area-1');
     const textArea2 = document.getElementById('text-area-2');
     const copyTextBtn = document.getElementById('copy-text-btn');
+    const copyStatusMessage = document.getElementById('copy-status-message'); // Get the new element
+
+    // Modal elements
+    const cardInputModal = document.getElementById('card-input-modal');
+    const modalTitle = document.getElementById('modal-title');
+    const modalTextarea = document.getElementById('modal-textarea');
+    const modalSaveBtn = document.getElementById('modal-save-btn');
+    const modalCancelBtn = document.getElementById('modal-cancel-btn');
+    const closeModalBtn = document.querySelector('.close-modal-btn');
 
     let draggedCard = null; // To store the card being dragged
+    let editingCardContent = null; // To store the card's content div being edited
+
+    // Function to open the modal
+    function openModal(isEditing = false, cardContentDiv = null, currentText = '') {
+        editingCardContent = isEditing ? cardContentDiv : null;
+        modalTitle.textContent = isEditing ? '修改卡片' : '增加卡片';
+        modalTextarea.value = currentText;
+        cardInputModal.style.display = 'flex'; // Use flex to align center as per CSS
+        modalTextarea.focus();
+    }
+
+    // Function to close the modal
+    function closeModal() {
+        modalTextarea.value = '';
+        editingCardContent = null;
+        cardInputModal.style.display = 'none';
+    }
+
+    // Event listeners for modal buttons
+    closeModalBtn.addEventListener('click', closeModal);
+    modalCancelBtn.addEventListener('click', closeModal);
+
+    modalSaveBtn.addEventListener('click', () => {
+        const text = modalTextarea.value.trim();
+        if (text) {
+            if (editingCardContent) {
+                // Editing existing card
+                editingCardContent.textContent = text;
+            } else {
+                // Adding new card
+                const newCard = createCard(text);
+                cardContainer.appendChild(newCard);
+            }
+            closeModal();
+        } else {
+            alert('卡片文本不能为空!');
+        }
+    });
+
+    // Close modal if user clicks outside the modal content
+    window.addEventListener('click', (event) => {
+        if (event.target === cardInputModal) {
+            closeModal();
+        }
+    });
 
     // Function to create a new card
     function createCard(text) {
@@ -24,10 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editBtn.classList.add('edit-btn');
         editBtn.textContent = '修改';
         editBtn.addEventListener('click', () => {
-            const newText = prompt('输入新的卡片文本:', cardContent.textContent);
-            if (newText !== null && newText.trim() !== '') {
-                cardContent.textContent = newText;
-            }
+            openModal(true, cardContent, cardContent.textContent);
         });
 
         const deleteBtn = document.createElement('button');
@@ -63,14 +114,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event listener for adding a new card
     addCardBtn.addEventListener('click', () => {
-        const cardText = prompt('输入卡片文本:');
-        if (cardText !== null && cardText.trim() !== '') {
-            const newCard = createCard(cardText);
-            cardContainer.appendChild(newCard);
-        }
+        openModal(); // Open modal for new card
     });
 
-    // Placeholder for drag and drop on text areas - will be detailed in next step
+    // Drag and drop functionality for text areas
     [textArea1, textArea2].forEach(area => {
         area.addEventListener('dragover', (e) => {
             e.preventDefault(); // Necessary to allow dropping
@@ -85,25 +132,32 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             area.classList.remove('drag-over');
             const cardText = e.dataTransfer.getData('text/plain');
-            // Append text, or replace, or insert at cursor - for now, append
-            area.value += (area.value ? ' ' : '') + cardText;
+            // Clear existing content and set it to cardText
+            area.value = cardText;
         });
     });
 
-    // Placeholder for copy text functionality - will be detailed in next step
+    // Copy text functionality
     copyTextBtn.addEventListener('click', () => {
         const combinedText = textArea1.value + '\n' + textArea2.value; // Combine text with a newline
+        copyStatusMessage.textContent = ''; // Clear previous message
+
         if (combinedText.trim()) {
             navigator.clipboard.writeText(combinedText)
                 .then(() => {
-                    alert('组合文本已复制到剪贴板!');
+                    copyStatusMessage.textContent = '组合文本已复制到剪贴板!';
+                    copyStatusMessage.style.color = 'green';
+                    setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000); // Clear after 3 seconds
                 })
                 .catch(err => {
                     console.error('无法复制文本: ', err);
-                    alert('复制失败，请查看控制台获取更多信息。');
+                    copyStatusMessage.textContent = '复制失败。请重试或检查浏览器权限。';
+                    copyStatusMessage.style.color = 'red';
                 });
         } else {
-            alert('没有文本可供复制。');
+            copyStatusMessage.textContent = '没有文本可供复制。';
+            copyStatusMessage.style.color = 'orange';
+            setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000); // Clear after 3 seconds
         }
     });
 

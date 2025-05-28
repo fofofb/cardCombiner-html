@@ -128,3 +128,96 @@ textarea.drag-over {
     text-align: center;
     margin-top: 20px;
 }
+
+/* Modal Styles */
+.modal {
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    display: none; /* Hidden by default - will be controlled by JS */
+    align-items: center; /* Center vertically */
+    justify-content: center; /* Center horizontally */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: auto; /* Auto margins for centering, if flex not fully supported */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px; /* Max width */
+    border-radius: 8px;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    text-align: center;
+}
+
+.modal-content textarea {
+    width: 100%; /* Full width relative to modal-content */
+    min-height: 100px; /* Decent starting height */
+    padding: 10px;
+    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+.modal-content button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#modal-save-btn {
+    background-color: #007bff;
+    color: white;
+}
+#modal-save-btn:hover {
+    background-color: #0056b3;
+}
+
+#modal-cancel-btn {
+    background-color: #6c757d;
+    color: white;
+}
+#modal-cancel-btn:hover {
+    background-color: #545b62;
+}
+
+.close-modal-btn {
+    color: #aaa;
+    float: right; /* Position to the right */
+    font-size: 28px;
+    font-weight: bold;
+    align-self: flex-end; /* Align to the end of the flex container (modal-content) */
+    cursor: pointer;
+}
+
+.close-modal-btn:hover,
+.close-modal-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Styles for the copy status message */
+#copy-status-message {
+    margin-top: 10px; /* Already set inline, but good to have in CSS */
+    min-height: 20px; /* Already set inline */
+    text-align: center; /* Center the message text */
+    font-weight: bold;
+    font-size: 0.9em;
+    /* Colors are set by JavaScript (green for success, red for error, orange for warning) */
+}
