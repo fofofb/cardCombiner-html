@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const pasteCardBtn = document.getElementById('paste-card-btn'); // Get the new button
     const exportCardsBtn = document.getElementById('export-cards-btn'); // Get the export button
     const importCardsInput = document.getElementById('import-cards-input'); // Get the import input
+    const toggleDeleteModeBtn = document.getElementById('toggle-delete-mode-btn'); // Get the toggle delete mode button
+    const bodyElement = document.body; // Get the body element
     const cardContainer = document.getElementById('card-container');
     const textArea1 = document.getElementById('text-area-1');
     const textArea2 = document.getElementById('text-area-2');
@@ -11,28 +13,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Modal elements
     const cardInputModal = document.getElementById('card-input-modal');
-    const modalTitle = document.getElementById('modal-title');
-    const modalTextarea = document.getElementById('modal-textarea');
+    const modalTitleElement = document.getElementById('modal-title'); // Renamed for clarity from modalTitle (which is a string var now)
+    const modalTitleInput = document.getElementById('modal-title-input');
+    const modalContentTextarea = document.getElementById('modal-content-textarea');
     const modalSaveBtn = document.getElementById('modal-save-btn');
     const modalCancelBtn = document.getElementById('modal-cancel-btn');
     const closeModalBtn = document.querySelector('.close-modal-btn');
 
     let draggedCard = null; // To store the card being dragged
-    let editingCardContent = null; // To store the card's content div being edited
+    let editingCard = null; // To store the card's main div element being edited
+    let isDeletionModeActive = false; // State variable for deletion mode
 
     // Function to open the modal
-    function openModal(isEditing = false, cardContentDiv = null, currentText = '') {
-        editingCardContent = isEditing ? cardContentDiv : null;
-        modalTitle.textContent = isEditing ? '修改卡片' : '增加卡片';
-        modalTextarea.value = currentText;
-        cardInputModal.style.display = 'flex'; // Use flex to align center as per CSS
-        modalTextarea.focus();
+    // Mode can be 'add', 'edit', or 'paste'
+    function openModal(mode = 'add', cardElement = null, prefillData = { title: '', content: '' }) {
+        editingCard = (mode === 'edit') ? cardElement : null;
+        
+        let modalTitleText = '';
+        let currentTitle = '';
+        let currentContent = '';
+
+        if (mode === 'edit' && cardElement) {
+            modalTitleText = '修改卡片';
+            currentTitle = cardElement.querySelector('.card-title').textContent;
+            currentContent = cardElement.querySelector('.card-main-content').textContent;
+        } else if (mode === 'paste') {
+            modalTitleText = '从剪贴板创建卡片';
+            currentTitle = prefillData.title || ''; // Should be empty as per req
+            currentContent = prefillData.content || '';
+        } else { // 'add' mode
+            modalTitleText = '增加卡片';
+        }
+
+        modalTitleElement.textContent = modalTitleText;
+        modalTitleInput.value = currentTitle;
+        modalContentTextarea.value = currentContent;
+        
+        cardInputModal.style.display = 'flex';
+        modalTitleInput.focus(); // Focus on title input first
     }
 
     // Function to close the modal
     function closeModal() {
-        modalTextarea.value = '';
-        editingCardContent = null;
+        modalTitleInput.value = '';
+        modalContentTextarea.value = '';
+        editingCard = null;
         cardInputModal.style.display = 'none';
     }
 
@@ -41,21 +66,28 @@ document.addEventListener('DOMContentLoaded', () => {
     modalCancelBtn.addEventListener('click', closeModal);
 
     modalSaveBtn.addEventListener('click', () => {
-        const text = modalTextarea.value.trim();
-        if (text) {
-            if (editingCardContent) {
-                // Editing existing card
-                editingCardContent.textContent = text;
-            } else {
-                // Adding new card
-                const newCard = createCard(text);
-                cardContainer.appendChild(newCard);
-            }
-            saveCardsToLocalStorage(); // Save after adding/editing
-            closeModal();
-        } else {
-            alert('卡片文本不能为空!');
+        const title = modalTitleInput.value.trim();
+        const content = modalContentTextarea.value.trim();
+
+        if (!title) {
+            alert('卡片标题不能为空!');
+            return;
         }
+        // Content can be empty if desired by user
+
+        const cardData = { title, content };
+
+        if (editingCard) {
+            // Editing existing card
+            editingCard.querySelector('.card-title').textContent = title;
+            editingCard.querySelector('.card-main-content').textContent = content;
+        } else {
+            // Adding new card
+            const newCard = createCard(cardData);
+            cardContainer.appendChild(newCard);
+        }
+        saveCardsToLocalStorage();
+        closeModal();
     });
 
     // Close modal if user clicks outside the modal content
@@ -66,14 +98,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Function to create a new card
-    function createCard(text) {
+    function createCard(cardData) { // Expects { title, content }
         const card = document.createElement('div');
         card.classList.add('card');
-        card.setAttribute('draggable', true); // Make the card draggable
 
-        const cardContent = document.createElement('div');
-        cardContent.classList.add('card-content');
-        cardContent.textContent = text;
+        const cardTitleDiv = document.createElement('div');
+        cardTitleDiv.classList.add('card-title');
+        cardTitleDiv.textContent = cardData.title;
+
+        const cardMainContentDiv = document.createElement('div');
+        cardMainContentDiv.classList.add('card-main-content');
+        cardMainContentDiv.textContent = cardData.content;
+        // cardMainContentDiv.style.display = 'none'; // Already handled by CSS
 
         const cardButtons = document.createElement('div');
         cardButtons.classList.add('card-buttons');
@@ -82,30 +118,33 @@ document.addEventListener('DOMContentLoaded', () => {
         editBtn.classList.add('edit-btn');
         editBtn.textContent = '修改';
         editBtn.addEventListener('click', () => {
-            openModal(true, cardContent, cardContent.textContent);
+            if (isDeletionModeActive) return;
+            openModal('edit', card); // Pass the whole card element
         });
 
         const deleteBtn = document.createElement('button');
         deleteBtn.classList.add('delete-btn');
         deleteBtn.textContent = '删除';
         deleteBtn.addEventListener('click', () => {
+            if (isDeletionModeActive) return;
             card.remove();
-            saveCardsToLocalStorage(); // Save after deleting
+            saveCardsToLocalStorage();
         });
 
         cardButtons.appendChild(editBtn);
         cardButtons.appendChild(deleteBtn);
-        card.appendChild(cardContent);
+        card.appendChild(cardTitleDiv);
+        card.appendChild(cardMainContentDiv); // Hidden content
         card.appendChild(cardButtons);
 
         // Add dragstart event listener to the card
         card.addEventListener('dragstart', (e) => {
             draggedCard = card;
             setTimeout(() => {
-                card.classList.add('dragging'); // Style when dragging
+                card.classList.add('dragging');
             }, 0);
-            // Set data to be transferred (e.g., the card's text)
-            e.dataTransfer.setData('text/plain', cardContent.textContent);
+            // Drag content, not title
+            e.dataTransfer.setData('text/plain', cardMainContentDiv.textContent);
         });
 
         // Add dragend event listener to the card
@@ -114,12 +153,22 @@ document.addEventListener('DOMContentLoaded', () => {
             draggedCard = null;
         });
 
+        // Card click listener for deletion mode
+        card.addEventListener('click', (e) => {
+            if (isDeletionModeActive) {
+                e.stopPropagation();
+                card.remove();
+                saveCardsToLocalStorage();
+            }
+        });
+
+        card.setAttribute('draggable', !isDeletionModeActive);
         return card;
     }
 
     // Event listener for adding a new card
     addCardBtn.addEventListener('click', () => {
-        openModal(); // Open modal for new card
+        openModal('add');
     });
 
     // Event listener for pasting a new card from clipboard
@@ -127,113 +176,97 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const text = await navigator.clipboard.readText();
             if (text.trim() !== '') {
-                const newCard = createCard(text);
-                cardContainer.appendChild(newCard);
-                saveCardsToLocalStorage(); // Save after adding card
-                // Optionally, provide feedback to the user via copyStatusMessage
-                // copyStatusMessage.textContent = '卡片已通过剪贴板内容创建!';
-                // copyStatusMessage.style.color = 'green';
-                // setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000);
+                openModal('paste', null, { content: text }); // Title will be empty
             } else {
-                // Handle empty clipboard text
-                // copyStatusMessage.textContent = '剪贴板为空或只包含空格。';
-                // copyStatusMessage.style.color = 'orange';
-                // setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000);
-                alert('剪贴板为空或只包含空格。'); // Using alert for now
+                alert('剪贴板为空或只包含空格。');
             }
         } catch (err) {
             console.error('无法从剪贴板读取文本: ', err);
-            // Handle errors, e.g., permission denied
-            // copyStatusMessage.textContent = '无法从剪贴板读取。请检查权限。';
-            // copyStatusMessage.style.color = 'red';
-            // setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000);
-            alert('无法从剪贴板读取。请检查权限。'); // Using alert for now
+            alert('无法从剪贴板读取。请检查权限。');
         }
     });
 
     // Event listener for exporting cards
     exportCardsBtn.addEventListener('click', () => {
-        const cards = document.querySelectorAll('#card-container .card .card-content');
+        const cards = document.querySelectorAll('#card-container .card');
         if (cards.length === 0) {
-            // copyStatusMessage.textContent = '没有卡片可供导出。';
-            // copyStatusMessage.style.color = 'orange';
-            // setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000);
-            alert('没有卡片可供导出。'); // Placeholder, can use inline message
+            alert('没有卡片可供导出。');
             return;
         }
 
-        const cardTexts = Array.from(cards).map(card => card.textContent);
-        const jsonString = JSON.stringify(cardTexts, null, 2); // null, 2 for pretty print
+        const cardObjects = Array.from(cards).map(card => {
+            return {
+                title: card.querySelector('.card-title').textContent,
+                content: card.querySelector('.card-main-content').textContent
+            };
+        });
+        const jsonString = JSON.stringify(cardObjects, null, 2);
         const blob = new Blob([jsonString], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
 
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'cards.json'; // Filename for the download
-        document.body.appendChild(a); // Append to body to make it clickable
-        a.click(); // Trigger download
-        document.body.removeChild(a); // Clean up
-        URL.revokeObjectURL(url); // Release object URL
+        a.download = 'cards.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
 
-        // Optionally, provide feedback
-        // copyStatusMessage.textContent = '卡片已导出!';
-        // copyStatusMessage.style.color = 'green';
-        // setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000);
+    // Toggle Deletion Mode Button Event Listener
+    toggleDeleteModeBtn.addEventListener('click', () => {
+        isDeletionModeActive = !isDeletionModeActive;
+        toggleDeleteModeBtn.classList.toggle('active', isDeletionModeActive);
+        bodyElement.classList.toggle('delete-mode-active', isDeletionModeActive);
+
+        const allCards = document.querySelectorAll('#card-container .card');
+        allCards.forEach(c => {
+            c.setAttribute('draggable', !isDeletionModeActive);
+        });
     });
 
     // Event listener for importing cards
     importCardsInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
-        if (!file) {
-            return; // No file selected
-        }
+        if (!file) return;
 
         if (file.type !== 'application/json') {
-            // copyStatusMessage.textContent = '文件类型无效。请选择一个 .json 文件。';
-            // copyStatusMessage.style.color = 'red';
-            // setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000);
             alert('文件类型无效。请选择一个 .json 文件。');
-            importCardsInput.value = ''; // Reset file input
+            importCardsInput.value = '';
             return;
         }
 
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
-                const cardTexts = JSON.parse(e.target.result);
-                if (!Array.isArray(cardTexts) || !cardTexts.every(item => typeof item === 'string')) {
-                    throw new Error('JSON 格式无效：需要一个字符串数组。');
+                const importedData = JSON.parse(e.target.result);
+                if (!Array.isArray(importedData) || !importedData.every(item => 
+                    typeof item === 'object' && item !== null && 
+                    'title' in item && typeof item.title === 'string' &&
+                    'content' in item && typeof item.content === 'string'
+                )) {
+                    throw new Error('JSON 格式无效：需要一个包含 title 和 content 属性的对象数组。');
                 }
 
-                cardTexts.forEach(text => {
-                    if (text.trim() !== '') { // Avoid creating empty cards if somehow in JSON
-                        const newCard = createCard(text);
+                importedData.forEach(cardData => {
+                    if (cardData.title.trim() !== '' || cardData.content.trim() !== '') { // Allow cards with empty content but not empty title
+                        const newCard = createCard(cardData);
                         cardContainer.appendChild(newCard);
                     }
                 });
-                saveCardsToLocalStorage(); // Save all cards (including new imported ones)
-
-                // copyStatusMessage.textContent = '卡片已成功导入!';
-                // copyStatusMessage.style.color = 'green';
-                // setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000);
-                alert(cardTexts.length + ' 张卡片已成功导入!');
+                saveCardsToLocalStorage();
+                alert(importedData.length + ' 张卡片已成功导入!');
             } catch (error) {
                 console.error('无法导入卡片: ', error);
-                // copyStatusMessage.textContent = '无法导入卡片: ' + error.message;
-                // copyStatusMessage.style.color = 'red';
-                // setTimeout(() => { copyStatusMessage.textContent = ''; }, 5000);
                 alert('无法导入卡片: ' + error.message);
             } finally {
-                importCardsInput.value = ''; // Reset file input regardless of success/failure
+                importCardsInput.value = '';
             }
         };
         reader.onerror = () => {
             console.error('读取文件时出错。');
-            // copyStatusMessage.textContent = '读取文件时出错。';
-            // copyStatusMessage.style.color = 'red';
-            // setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000);
             alert('读取文件时出错。');
-            importCardsInput.value = ''; // Reset file input
+            importCardsInput.value = '';
         };
         reader.readAsText(file);
     });
@@ -241,26 +274,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // Drag and drop functionality for text areas
     [textArea1, textArea2].forEach(area => {
         area.addEventListener('dragover', (e) => {
-            e.preventDefault(); // Necessary to allow dropping
-            area.classList.add('drag-over'); // Visual feedback
+            e.preventDefault();
+            area.classList.add('drag-over');
         });
 
         area.addEventListener('dragleave', () => {
-            area.classList.remove('drag-over'); // Remove visual feedback
+            area.classList.remove('drag-over');
         });
 
         area.addEventListener('drop', (e) => {
             e.preventDefault();
             area.classList.remove('drag-over');
-            const cardText = e.dataTransfer.getData('text/plain');
-            // Clear existing content and set it to cardText
-            area.value = cardText;
+            const cardContent = e.dataTransfer.getData('text/plain'); // Now this is card's main content
+            area.value = cardContent; // Replace textarea content
         });
     });
 
     // Copy text functionality
     copyTextBtn.addEventListener('click', () => {
-        const combinedText = textArea1.value + '\n' + textArea2.value; // Combine text with a newline
+        let text1 = textArea1.value;
+        let text2 = textArea2.value;
+        let combinedText;
+
+        if (text2.trim() !== '') {
+            // Wrap text2 content if it's not empty or just whitespace
+            const wrappedText2 = "```\n" + text2 + "\n```";
+            if (text1.trim() !== '') {
+                combinedText = text1 + "\n\n" + wrappedText2; // Add an extra newline if text1 also exists
+            } else {
+                combinedText = wrappedText2;
+            }
+        } else {
+            combinedText = text1; // Only text1 if text2 is empty
+        }
+        
         copyStatusMessage.textContent = ''; // Clear previous message
 
         if (combinedText.trim()) {
@@ -268,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(() => {
                     copyStatusMessage.textContent = '组合文本已复制到剪贴板!';
                     copyStatusMessage.style.color = 'green';
-                    setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000); // Clear after 3 seconds
+                    setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000);
                 })
                 .catch(err => {
                     console.error('无法复制文本: ', err);
@@ -278,26 +325,44 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             copyStatusMessage.textContent = '没有文本可供复制。';
             copyStatusMessage.style.color = 'orange';
-            setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000); // Clear after 3 seconds
+            setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000);
         }
     });
 
     // Function to save cards to Local Storage
     function saveCardsToLocalStorage() {
-        const cards = document.querySelectorAll('#card-container .card .card-content');
-        const cardTexts = Array.from(cards).map(card => card.textContent);
-        localStorage.setItem('userCards', JSON.stringify(cardTexts));
+        const cards = document.querySelectorAll('#card-container .card');
+        const cardObjects = Array.from(cards).map(card => {
+            return {
+                title: card.querySelector('.card-title').textContent,
+                content: card.querySelector('.card-main-content').textContent
+            };
+        });
+        localStorage.setItem('userCards', JSON.stringify(cardObjects));
     }
 
     // Function to load cards from Local Storage
     function loadCardsFromLocalStorage() {
         const storedCards = localStorage.getItem('userCards');
         if (storedCards) {
-            const cardTexts = JSON.parse(storedCards);
-            cardTexts.forEach(text => {
-                const newCard = createCard(text);
-                cardContainer.appendChild(newCard);
-            });
+            try {
+                const cardObjects = JSON.parse(storedCards);
+                if (Array.isArray(cardObjects)) { // Basic validation
+                    cardObjects.forEach(cardData => {
+                        // Additional check for valid structure during load
+                        if (typeof cardData === 'object' && cardData !== null && 
+                            'title' in cardData && 'content' in cardData) {
+                            const newCard = createCard(cardData);
+                            cardContainer.appendChild(newCard);
+                        } else {
+                            console.warn('Skipping invalid card data from localStorage:', cardData);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error parsing cards from localStorage:', error);
+                // Optionally clear corrupted data: localStorage.removeItem('userCards');
+            }
         }
     }
 

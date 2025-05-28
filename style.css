@@ -146,14 +146,18 @@ textarea.drag-over {
 
 .modal-content {
     background-color: #fefefe;
-    margin: auto; /* Auto margins for centering, if flex not fully supported */
+    margin: auto; /* Keep this for centering if not using flexbox for modal parent */
     padding: 20px;
     border: 1px solid #888;
-    width: 80%;
-    max-width: 500px; /* Max width */
     border-radius: 8px;
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
     display: flex;
+    /* --- Size Adjustments --- */
+    width: 66vw; /* 2/3 of viewport width */
+    max-width: 900px; /* Optional: prevent it from becoming too large on very wide screens */
+    height: 66vh; /* 2/3 of viewport height */
+    max-height: 800px; /* Optional: prevent it from becoming too tall on very tall screens */
+    /* --- End Size Adjustments --- */
     flex-direction: column;
     gap: 10px;
 }
@@ -163,11 +167,13 @@ textarea.drag-over {
     text-align: center;
 }
 
-.modal-content textarea {
+/* Ensure the content textarea within the modal can grow */
+#modal-content-textarea { /* This ID was introduced in the previous step */
+    flex-grow: 1; /* Allow textarea to take up available space in flex column */
     width: 100%; /* Full width relative to modal-content */
-    min-height: 100px; /* Decent starting height */
+    /* min-height is already set, but flex-grow will handle dynamic height better */
     padding: 10px;
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
+    box-sizing: border-box;
     border: 1px solid #ccc;
     border-radius: 4px;
     resize: vertical;
@@ -236,4 +242,52 @@ textarea.drag-over {
 
 .button-like-label:hover {
     background-color: #0056b3; /* Darker shade on hover */
+}
+
+/* Styles for Deletion Mode */
+#toggle-delete-mode-btn.active {
+    background-color: #dc3545; /* Red to indicate active delete mode */
+    color: white;
+}
+#toggle-delete-mode-btn.active:hover {
+    background-color: #c82333; /* Darker red on hover */
+}
+
+/* Optional: Visual cue for cards when deletion mode is active */
+body.delete-mode-active .card {
+    cursor: crosshair !important; /* Change cursor to indicate clickable for delete */
+    border-color: #dc3545 !important; /* Red border for cards, !important to override existing */
+    opacity: 0.8;
+}
+body.delete-mode-active .card:hover {
+    opacity: 1;
+    box-shadow: 0 0 5px #dc3545;
+}
+
+/* Ensure card buttons are less prominent or disabled in delete mode */
+body.delete-mode-active .card .card-buttons button {
+    opacity: 0.5;
+    pointer-events: none; /* Disable clicks on original edit/delete buttons in delete mode */
+}
+
+/* Adjust modal title input if needed, though it's usually single line */
+#modal-title-input {
+     width: 100%; /* Full width relative to modal-content */
+     padding: 10px;
+     margin-bottom: 10px; /* Space between title and content inputs, already present */
+     box-sizing: border-box;
+     border: 1px solid #ccc;
+     border-radius: 4px;
+}
+
+/* Styles for card title and hidden content */
+.card-title {
+    font-weight: bold;
+    margin-bottom: 5px; /* Space between title and buttons if content is short */
+    word-wrap: break-word;
+    white-space: pre-wrap; /* Allows newlines in title if any */
+}
+
+.card-main-content {
+    display: none; /* Ensure this is hidden */
 }
