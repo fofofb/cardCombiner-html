@@ -10,18 +10,22 @@
     <div class="container">
         <h1>文本组合器</h1>
 
+        <div class="main-controls-container">
+            <div id="top-left-controls" class="control-group">
+                <button id="add-card-btn">增加卡片</button>
+                <button id="paste-card-btn">从剪贴板粘贴为卡片</button>
+            </div>
+            <div id="top-right-controls" class="control-group">
+                <input type="file" id="import-cards-input" accept=".json" style="display: none;">
+                <label for="import-cards-input" class="button-like-label" id="import-cards-btn">导入卡片</label>
+                <button id="export-cards-btn">导出卡片</button>
+                <button id="toggle-delete-mode-btn">删除模式</button>
+            </div>
+        </div>
+
         <div class="text-areas">
             <textarea id="text-area-1" placeholder="在此处输入或拖动卡片..."></textarea>
             <textarea id="text-area-2" placeholder="在此处输入或拖动卡片..."></textarea>
-        </div>
-
-        <div class="card-controls">
-            <button id="add-card-btn">增加卡片</button>
-            <button id="paste-card-btn">从剪贴板粘贴为卡片</button>
-            <button id="export-cards-btn">导出卡片</button>
-            <input type="file" id="import-cards-input" accept=".json" style="display: none;">
-            <label for="import-cards-input" class="button-like-label" id="import-cards-btn">导入卡片</label>
-            <button id="toggle-delete-mode-btn">删除模式</button>
         </div>
 
         <div id="card-container" class="card-container">

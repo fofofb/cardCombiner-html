@@ -131,8 +131,32 @@ document.addEventListener('DOMContentLoaded', () => {
             saveCardsToLocalStorage();
         });
 
+        const duplicateBtn = document.createElement('button');
+        duplicateBtn.classList.add('duplicate-btn');
+        duplicateBtn.textContent = '复制';
+
+        duplicateBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isDeletionModeActive) return;
+
+            const originalTitle = cardData.title;
+            const originalContent = cardData.content;
+            const newTitle = `${originalTitle} (复制)`;
+
+            const newCardData = { title: newTitle, content: originalContent };
+            const duplicatedCardElement = createCard(newCardData);
+            cardContainer.appendChild(duplicatedCardElement);
+            // It's good practice to insert the duplicated card next to the original,
+            // but for simplicity, appending to the end is acceptable as per initial plan.
+            // If inserting next to original: card.insertAdjacentElement('afterend', duplicatedCardElement);
+
+
+            saveCardsToLocalStorage();
+        });
+
         cardButtons.appendChild(editBtn);
         cardButtons.appendChild(deleteBtn);
+        cardButtons.appendChild(duplicateBtn); // Add the duplicate button
         card.appendChild(cardTitleDiv);
         card.appendChild(cardMainContentDiv); // Hidden content
         card.appendChild(cardButtons);
@@ -174,15 +198,48 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event listener for pasting a new card from clipboard
     pasteCardBtn.addEventListener('click', async () => {
         try {
-            const text = await navigator.clipboard.readText();
-            if (text.trim() !== '') {
-                openModal('paste', null, { content: text }); // Title will be empty
+            const pastedText = await navigator.clipboard.readText();
+            if (pastedText.trim() !== '') {
+                // Generate timestamp title
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const seconds = String(now.getSeconds()).padStart(2, '0');
+                const generatedTitle = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+                const newCardData = { title: generatedTitle, content: pastedText };
+                const newCardElement = createCard(newCardData);
+                cardContainer.appendChild(newCardElement);
+                saveCardsToLocalStorage();
+
+                // Optional: Provide feedback via copyStatusMessage
+                if (copyStatusMessage) { // Check if copyStatusMessage is defined
+                     copyStatusMessage.textContent = '卡片已通过剪贴板内容创建，标题为时间戳。';
+                     copyStatusMessage.style.color = 'green';
+                     setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000);
+                }
+
             } else {
-                alert('剪贴板为空或只包含空格。');
+                if (copyStatusMessage) {
+                    copyStatusMessage.textContent = '剪贴板为空或只包含空格。';
+                    copyStatusMessage.style.color = 'orange';
+                    setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000);
+                } else {
+                    alert('剪贴板为空或只包含空格。');
+                }
             }
         } catch (err) {
             console.error('无法从剪贴板读取文本: ', err);
-            alert('无法从剪贴板读取。请检查权限。');
+            if (copyStatusMessage) {
+                copyStatusMessage.textContent = '无法从剪贴板读取。请检查权限。';
+                copyStatusMessage.style.color = 'red';
+                setTimeout(() => { copyStatusMessage.textContent = ''; }, 3000);
+            } else {
+                alert('无法从剪贴板读取。请检查权限。');
+            }
         }
     });
 
