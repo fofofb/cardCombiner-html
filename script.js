@@ -98,6 +98,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Function to handle keydown events within the modal
+    function handleModalKeyDown(event) {
+        if (!cardInputModal || cardInputModal.style.display === 'none') {
+            return; // Modal is not visible
+        }
+
+        // Escape key to close modal
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            closeModal();
+        }
+
+        // Ctrl+Enter to save and close modal
+        if (event.ctrlKey && event.key === 'Enter') {
+            event.preventDefault();
+            modalSaveBtn.click(); // Programmatically click the save button
+        }
+    }
+
+    // Attach keydown listener to modal inputs
+    if (modalTitleInput) {
+        modalTitleInput.addEventListener('keydown', handleModalKeyDown);
+    }
+    if (modalContentTextarea) {
+        modalContentTextarea.addEventListener('keydown', handleModalKeyDown);
+    }
+
+
     // Function to create a new card
     function createCard(cardData) { // Expects { title, content }
         const card = document.createElement('div');
