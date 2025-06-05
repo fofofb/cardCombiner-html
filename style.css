@@ -326,3 +326,10 @@ body.delete-mode-active .card .card-buttons button {
 .card-buttons button.duplicate-btn:hover {
     background-color: #138496; /* Darker info blue on hover */
 }
+
+/* Styling for selected card */
+.card.selected {
+    border-color: #007bff; /* Example: Blue border */
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.5); /* Example: Blue shadow */
+    background-color: #e7f3ff; /* Example: Light blue background */
+}
