@@ -25,6 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let isDeletionModeActive = false; // State variable for deletion mode
     let selectedCardElement = null; // For card selection
 
+    // Delete confirmation toggle
+    let confirmDeletions = true; // Default value
+    const toggleDeleteConfirmCheckbox = document.getElementById('toggle-delete-confirm-checkbox');
+
     // Function to open the modal
     // Mode can be 'add', 'edit', or 'paste'
     function openModal(mode = 'add', cardElement = null, prefillData = { title: '', content: '' }) {
@@ -156,8 +160,14 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteBtn.textContent = '删除';
         deleteBtn.addEventListener('click', () => {
             if (isDeletionModeActive) return;
-            card.remove();
-            saveCardsToLocalStorage();
+            // Modified Deletion Logic for individual delete button
+            if (!confirmDeletions || window.confirm(`确定要删除卡片 "${cardData.title}" 吗?`)) {
+                card.remove();
+                if (selectedCardElement === card) { // If the deleted card was selected
+                    selectedCardElement = null;
+                }
+                saveCardsToLocalStorage();
+            }
         });
 
         const duplicateBtn = document.createElement('button');
@@ -209,13 +219,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Card click listener for deletion mode AND selection
         card.addEventListener('click', function(event) { // Use 'function' for 'this'
             if (isDeletionModeActive) {
-                // Deletion mode logic (already here)
-                event.stopPropagation(); // Keep this if it's preventing other issues
-                this.remove(); // 'this' is the card
-                saveCardsToLocalStorage();
-                // If the deleted card was selected, clear selection
-                if (selectedCardElement === this) {
-                    selectedCardElement = null;
+                // Modified Deletion Mode Logic
+                event.stopPropagation();
+                const cardTitleForConfirm = this.querySelector('.card-title') ? this.querySelector('.card-title').textContent : 'this card';
+                if (!confirmDeletions || window.confirm(`确定要删除卡片 "${cardTitleForConfirm}" 吗?`)) {
+                    this.remove(); // 'this' is the card
+                    if (selectedCardElement === this) { // If the deleted card was selected
+                        selectedCardElement = null;
+                    }
+                    saveCardsToLocalStorage();
                 }
                 return; // Stop further processing for deletion
             }
@@ -563,6 +575,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load cards from local storage when the page loads
     loadCardsFromLocalStorage();
+
+    // Load delete confirmation preference
+    if (toggleDeleteConfirmCheckbox) { // Check if element exists (for robustness if HTML is out of sync)
+        const savedConfirmDeletePref = localStorage.getItem('confirmDeletions');
+        if (savedConfirmDeletePref !== null) {
+            confirmDeletions = JSON.parse(savedConfirmDeletePref);
+        }
+        toggleDeleteConfirmCheckbox.checked = confirmDeletions;
+
+        // Event Listener for Toggle
+        toggleDeleteConfirmCheckbox.addEventListener('change', function() {
+            confirmDeletions = this.checked;
+            localStorage.setItem('confirmDeletions', JSON.stringify(confirmDeletions));
+        });
+    }
 
     // Global paste event listener for Ctrl+V to create card
     document.addEventListener('paste', async (event) => {

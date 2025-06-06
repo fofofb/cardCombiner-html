@@ -333,3 +333,52 @@ body.delete-mode-active .card .card-buttons button {
     box-shadow: 0 0 8px rgba(0, 123, 255, 0.5); /* Example: Blue shadow */
     background-color: #e7f3ff; /* Example: Light blue background */
 }
+
+/* Delete Confirmation Toggle Switch Styles */
+.toggle-switch-container {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Space between switch and label */
+}
+
+#toggle-delete-confirm-checkbox {
+    height: 0;
+    width: 0;
+    visibility: hidden;
+}
+
+.toggle-switch-label {
+    cursor: pointer;
+    text-indent: -9999px; /* Hide the actual label text */
+    width: 40px; /* Width of the switch */
+    height: 20px; /* Height of the switch */
+    background: grey;
+    display: block;
+    border-radius: 100px;
+    position: relative;
+}
+
+.toggle-switch-label:after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px; /* Size of the knob */
+    height: 16px;
+    background: #fff;
+    border-radius: 90px;
+    transition: 0.3s;
+}
+
+#toggle-delete-confirm-checkbox:checked + .toggle-switch-label {
+    background: #007bff; /* 'on' color */
+}
+
+#toggle-delete-confirm-checkbox:checked + .toggle-switch-label:after {
+    left: calc(100% - 2px);
+    transform: translateX(-100%);
+}
+
+.toggle-switch-label:active:after {
+    width: 22px; /* Optional: make knob wider on click */
+}

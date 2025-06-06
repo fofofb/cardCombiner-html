@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文本组合器</title>
+    <title>LLM Helper</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>文本组合器</h1>
+        <h1>LLM Helper</h1>
 
         <div class="main-controls-container">
             <div id="top-left-controls" class="control-group">
@@ -16,6 +16,10 @@
                 <button id="paste-card-btn">从剪贴板粘贴为卡片</button>
             </div>
             <div id="top-right-controls" class="control-group">
+                <div class="toggle-switch-container">
+                    <input type="checkbox" id="toggle-delete-confirm-checkbox">
+                    <label for="toggle-delete-confirm-checkbox" class="toggle-switch-label">删除前确认</label>
+                </div>
                 <input type="file" id="import-cards-input" accept=".json" style="display: none;">
                 <label for="import-cards-input" class="button-like-label" id="import-cards-btn">导入卡片</label>
                 <button id="export-cards-btn">导出卡片</button>
